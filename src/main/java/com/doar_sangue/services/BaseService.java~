@@ -1,0 +1,26 @@
+package com.doar_sangue.services;
+
+import com.doar_sangue.repositories.GenericRepository;
+
+import java.util.List;
+
+public abstract class BaseService<T> {
+
+    protected final GenericRepository<T> repository;
+
+    protected BaseService(GenericRepository<T> repository) {
+        this.repository = repository;
+    }
+
+    public T saveDonor(T entity) {
+        return repository.save(entity);
+    }
+
+    public List<T> findAll() {
+        return repository.findAll();
+    }
+
+    public List<T> saveAll(List<T> entities) {
+        return repository.saveAll(entities);
+    }
+}

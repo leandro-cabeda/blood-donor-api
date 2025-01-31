@@ -1,0 +1,88 @@
+package com.doar_sangue;
+
+
+import com.doar_sangue.entities.Address;
+import com.doar_sangue.entities.Donor;
+import com.doar_sangue.services.DonorService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+public class DonorControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc; // Usando @Autowired em vez de @Mock
+
+    @Mock
+    private DonorService donorService; // Usando @MockBean para mockar o serviço
+
+    @Autowired
+    private ObjectMapper objectMapper; // Injetando ObjectMapper para conversão JSON
+
+    @Test
+    void testGetAllDonors() throws Exception {
+        // Mockando os dados
+        when(donorService.getAllDonors()).thenReturn(Arrays.asList(
+                new Donor(1L, "João Silva", "1234567", "111.222.333-44", "M",
+                        LocalDate.of(1990, 5, 15), "Maria Silva", "José Silva",
+                        "joao@email.com", "11-1234-5678", "11-98765-4321",
+                        75.5, 1.75, "O+",
+                        new Address("Rua A", "123", "Centro", "São Paulo", "SP", 91000)),
+
+                new Donor(2L, "Ana Souza", "7654321", "555.666.777-88", "F",
+                        LocalDate.of(1985, 8, 22), "Clara Souza", "Miguel Souza",
+                        "ana@email.com", "21-2345-6789", "21-98765-1234",
+                        62.0, 1.65, "A-",
+                        new Address("Avenida B", "456", "Bairro X", "Rio de Janeiro", "RJ", 22000)),
+
+                new Donor(3L, "Carlos Oliveira", "9876543", "999.888.777-66", "M",
+                        LocalDate.of(1992, 12, 10), "Lucia Oliveira", "Fernando Oliveira",
+                        "carlos@email.com", "31-3456-7890", "31-91234-5678",
+                        80.0, 1.80, "B+",
+                        new Address("Rua C", "789", "Bairro Y", "Belo Horizonte", "MG", 31000))
+        ));
+
+        // Chamando o endpoint e validando o resultado
+        mockMvc.perform(get("/api/donors"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(3)) // Corrigido para refletir o número correto de elementos
+                .andExpect(jsonPath("$[0].nome").value("João Silva"))
+                .andExpect(jsonPath("$[1].nome").value("Ana Souza"))
+                .andExpect(jsonPath("$[2].nome").value("Carlos Oliveira"));
+    }
+
+    @Test
+    void testAddDonor() throws Exception {
+        // Criando um mock de doador
+        Donor donor = new Donor(1L, "Paulo Azevedo", "98465165", "999.888.777-00", "M",
+                LocalDate.of(1990, 5, 15), "Renata Azevedo", "Lucas Azevedo",
+                "paulo@email.com", "11-7894-5298", "11-9596-8965",
+                65.3, 1.95, "O-",
+                new Address("Rua B", "8965", "Centro", "Rio de Janeiro", "RJ", 19800));
+
+        when(donorService.saveDonor(donor)).thenReturn(donor);
+
+        // Chamando o endpoint POST e validando o resultado
+        mockMvc.perform(post("/api/donors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(donor)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Paulo Azevedo"))
+                .andExpect(jsonPath("$.cpf").value("999.888.777-00"));
+    }
+}
